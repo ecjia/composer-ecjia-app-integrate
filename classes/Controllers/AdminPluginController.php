@@ -190,7 +190,7 @@ class AdminPluginController extends ecjia_admin
 				'flag' 	=> 0,
 				'alias' => ''
 			);
-			RC_DB::table('users')->where('flag', '>', 0)->update($data);
+			RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->where('flag', '>', 0)->update($data);
 			
 			ecjia_config::instance()->write_config('integrate_code', $code);
 		}

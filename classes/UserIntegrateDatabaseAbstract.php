@@ -132,7 +132,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
         }
 
         $data = array_combine($fields, $values);
-        RC_DB::table($this->user_table->getUserTable())->insert($data);
+        RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())->insert($data);
 
         if ($this->need_sync) {
             $this->sync($username, $password);
@@ -201,7 +201,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
         }
 
         if ($values) {
-            RC_DB::table($this->user_table->getUserTable())->where($this->user_table->getFieldName(), $post_username)->update($values);
+            RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())->where($this->user_table->getFieldName(), $post_username)->update($values);
 
             if ($this->need_sync) {
                 if (empty($md5password)) {
@@ -221,7 +221,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
     public function updateNewEmailForNotValidated($username)
     {
         // 新的E-mail，设置为未验证
-        return RC_DB::table('users')->where('user_name', $username)->update(array('is_validated' => 0));
+        return RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->where('user_name', $username)->update(array('is_validated' => 0));
     }
 
     /**
@@ -246,7 +246,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
         }
 
         //删除用户
-        RC_DB::table($this->user_table->getUserTable())->where($this->user_table->getFieldName(), $username)->delete();
+        RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())->where($this->user_table->getFieldName(), $username)->delete();
 
         return false;
     }
@@ -262,14 +262,14 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
 
         /* 如果没有定义密码则只检查用户名 */
         if ($password === null) {
-            $user = RC_DB::table($this->user_table->getUserTable())
+            $user = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
                 ->where($this->user_table->getFieldName(), $username)
                 ->value($this->user_table->getFieldId());
 
             return $user;
         } else {
             $password = $this->compilePassword($password);
-            $user = RC_DB::table($this->user_table->getUserTable())
+            $user = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
                 ->where($this->user_table->getFieldName(), $username)
                 ->where($this->user_table->getFieldPass(), $password)
                 ->value($this->user_table->getFieldId());
@@ -289,13 +289,13 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
     {
         if ($exclude_username) {
             /* 检查email是否重复，并排除指定的用户名 */
-            $field_id = RC_DB::table($this->user_table->getUserTable())
+            $field_id = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
                 ->where($this->user_table->getFieldEmail(), $email)
                 ->where($this->user_table->getFieldName(), '<>', $exclude_username)
                 ->value($this->user_table->getFieldId());
         } else {
             /* 检查email是否重复 */
-            $field_id = RC_DB::table($this->user_table->getUserTable())
+            $field_id = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
                 ->where($this->user_table->getFieldEmail(), $email)
                 ->value($this->user_table->getFieldId());
         }
@@ -317,13 +317,13 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
     {
         if ($exclude_username) {
             /* 检查email是否重复，并排除指定的用户名 */
-            $field_id = RC_DB::table($this->user_table->getUserTable())
+            $field_id = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
                 ->where($this->user_table->getFieldMobile(), $mobile)
                 ->where($this->user_table->getFieldName(), '<>', $exclude_username)
                 ->value($this->user_table->getFieldId());
         } else {
             /* 检查email是否重复 */
-            $field_id = RC_DB::table($this->user_table->getUserTable())
+            $field_id = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
                 ->where($this->user_table->getFieldMobile(), $mobile)
                 ->value($this->user_table->getFieldId());
         }
@@ -343,7 +343,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
      */
     public function getProfileByName($username)
     {
-        $row = RC_DB::table($this->user_table->getUserTable())->selectRaw(
+        $row = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())->selectRaw(
             $this->user_table->getFieldId() . ' AS `user_id`, ' .
             $this->user_table->getFieldName() . ' AS `user_name`, ' .
             $this->user_table->getFieldEmail() . ' AS `email`, ' .
@@ -366,7 +366,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
  */
     public function getProfileById($id)
     {
-        $row = RC_DB::table($this->user_table->getUserTable())->selectRaw(
+        $row = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())->selectRaw(
             $this->user_table->getFieldId() . ' AS `user_id`, ' .
             $this->user_table->getFieldName() . ' AS `user_name`, ' .
             $this->user_table->getFieldEmail() . ' AS `email`, ' .
@@ -389,7 +389,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
      */
     public function getProfileByMobile($mobile)
     {
-        $row = RC_DB::table($this->user_table->getUserTable())->selectRaw(
+        $row = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())->selectRaw(
             $this->user_table->getFieldId() . ' AS `user_id`, ' .
             $this->user_table->getFieldName() . ' AS `user_name`, ' .
             $this->user_table->getFieldEmail() . ' AS `email`, ' .
@@ -415,7 +415,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
         $credits = $this->getPointsName();
         $fileds = array_keys($credits);
         if ($fileds) {
-            $row = RC_DB::table($this->user_table->getUserTable())
+            $row = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
                 ->select($this->user_table->getFieldId())
                 ->selectRaw(implode(', ',$fileds))
                 ->where($this->user_table->getFieldName(), $username)
@@ -446,7 +446,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
                 $tmp[$credit] = $credit + $credits[$credit];
             }
 
-            RC_DB::table($this->user_table->getUserTable())
+            RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
                 ->where($this->user_table->getFieldName(), $username)
                 ->update($tmp);
         }
@@ -466,7 +466,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
             return array();
         }
 
-        $user_list = RC_DB::table($this->user_table->getUserTable())
+        $user_list = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
             ->select($this->user_table->getFieldName())
             ->whereIn($this->user_table->getFieldName(), $user_list)
             ->get();

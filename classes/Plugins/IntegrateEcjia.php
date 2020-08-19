@@ -123,14 +123,14 @@ class IntegrateEcjia extends UserIntegrateDatabaseAbstract
     function checkUser($username, $password = null)
     {
         if ($password === null) {
-            $user = RC_DB::table($this->user_table->getUserTable())
+            $user = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
                 ->where($this->user_table->getFieldName(), $username)
                 ->value($this->user_table->getFieldId());
 
             return $user;
         } else {
 
-            $row = RC_DB::table('users')->select('user_id', 'password', 'salt', 'ec_salt')
+            $row = RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->select('user_id', 'password', 'salt', 'ec_salt')
                 ->where('user_name', $username)->first();
             $ec_salt = $row['ec_salt'];
             if (empty($row)) {
@@ -151,7 +151,7 @@ class IntegrateEcjia extends UserIntegrateDatabaseAbstract
                             'password' => $new_password,
                             'ec_salt' => $ec_salt
                         );
-                        RC_DB::table('users')->where('user_name', $username)->update($data);
+                        RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->where('user_name', $username)->update($data);
                     }
 
                     return $row['user_id'];
@@ -188,7 +188,7 @@ class IntegrateEcjia extends UserIntegrateDatabaseAbstract
                     'salt'  	=> ''
                 );
 
-                RC_DB::table('users')->where('user_id', $row['user_id'])->update($data);
+                RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->where('user_id', $row['user_id'])->update($data);
 
                 return $row['user_id'];
             }

@@ -239,17 +239,17 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
      */
     public function syncRemoveUser($username)
     {
-        $user_id = RC_DB::table('users')->where('user_name', $username)->value('user_id');
+        $user_id = RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->where('user_name', $username)->value('user_id');
 
         if ($user_id) {
 
             $result = $this->userRemoveClearData($user_id);
             if ($result) {
                 //将删除用户的下级的parent_id 改为0
-                RC_DB::table('users')->where('parent_id', $user_id)->update(['parent_id' => 0]);
+                RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->where('parent_id', $user_id)->update(['parent_id' => 0]);
 
                 //删除用户
-                RC_DB::table('users')->where('user_id', $user_id)->delete();
+                RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->where('user_id', $user_id)->delete();
 
             }
 
@@ -277,7 +277,7 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
             return false;
         }
 
-        $profile = RC_DB::table('users')
+        $profile = RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')
             ->select('user_name', 'email', 'password', 'sex', 'birthday')
             ->where('user_name', $username)
             ->first();
@@ -292,7 +292,7 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
                     'birthday'   => $main_profile['birthday'] ,
                     'reg_time'   => $main_profile['reg_time'],
                 );
-                RC_DB::table('users')->insert($data);
+                RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->insert($data);
             } else {
                 $data = array(
                     'user_name'  => $username,
@@ -302,7 +302,7 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
                     'reg_time'   => $main_profile['reg_time'],
                     'password'   => $md5password
                 );
-                RC_DB::table('users')->insert($data);
+                RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->insert($data);
             }
             return true;
         } else {
@@ -326,7 +326,7 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
             if (empty($values)) {
                 return true;
             } else {
-                RC_DB::table('users')->where('user_name', $username)->update($values);
+                RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->where('user_name', $username)->update($values);
                 return true;
             }
         }
@@ -416,7 +416,7 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
             $time = SYS_TIME + 3600 * 24 * 15;
             setcookie("ECJIA[username]", $username, $time, $this->cookie_path, $this->cookie_domain);
 
-            $row = RC_DB::table('users')->select('user_id', 'password')->where('user_name', $username)->first();
+            $row = RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->select('user_id', 'password')->where('user_name', $username)->first();
             if ($row) {
                 setcookie("ECJIA[user_id]", $row['user_id'], $time, $this->cookie_path, $this->cookie_domain);
                 setcookie("ECJIA[password]", $row['password'], $time, $this->cookie_path, $this->cookie_domain);
@@ -468,7 +468,7 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
             RC_Session::destroy();
 
         } else {
-            $row = RC_DB::table('users')->select('user_id', 'password', 'email')->where('user_name', $username)->first();
+            $row = RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->select('user_id', 'password', 'email')->where('user_name', $username)->first();
             if ($row) {
                 RC_Session::set('user_id', $row['user_id']);
                 RC_Session::set('user_name', $username);
