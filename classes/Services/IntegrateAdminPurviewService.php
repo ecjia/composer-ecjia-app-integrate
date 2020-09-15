@@ -44,7 +44,7 @@
 //
 //  ---------------------------------------------------------------------------------
 //
-namespace Ecjia\App\Integrate;
+namespace Ecjia\App\Integrate\Services;
 
 /**
  * 后台权限API

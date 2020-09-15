@@ -44,7 +44,8 @@
 //
 //  ---------------------------------------------------------------------------------
 //
-namespace Ecjia\App\Integrate;
+namespace Ecjia\App\Integrate\Services;
+
 
 use ecjia_config;
 use RC_Plugin;

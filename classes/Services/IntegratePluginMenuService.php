@@ -44,7 +44,8 @@
 //
 //  ---------------------------------------------------------------------------------
 //
-namespace Ecjia\App\Integrate;
+namespace Ecjia\App\Integrate\Services;
+
 
 use ecjia_admin;
 use RC_Uri;
