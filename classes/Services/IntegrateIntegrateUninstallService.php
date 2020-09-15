@@ -44,18 +44,32 @@
 //
 //  ---------------------------------------------------------------------------------
 //
-defined('IN_ECJIA') or exit('No permission resources.');
+namespace Ecjia\App\Integrate;
+
+use ecjia_config;
+use RC_Plugin;
 
 /**
- * 后台菜单API
+ * 会员整合插件卸载API
  * @author royalwang
  */
-class integrate_plugin_menu_api extends Component_Event_Api {
-	
-	public function call(&$options) {	
-		$menus = ecjia_admin::make_admin_menu('menu_user_integrate', __('会员整合', 'integrate'), RC_Uri::url('integrate/admin_plugin/init'), 10)->add_purview('integrate_users')->add_base('integrate');
-
-		return $menus;
+class IntegrateIntegrateUninstallService
+{
+	public function handle(&$options) {
+	    if (isset($options['file'])) {
+	        $plugin_file = $options['file'];
+	        $plugin_file = RC_Plugin::plugin_basename( $plugin_file );
+	        $plugin_dir  = dirname($plugin_file);
+	         
+	        $plugins = ecjia_config::instance()->get_addon_config('user_integrate_plugins', true);	        
+	        unset($plugins[$plugin_dir]);
+	         
+	        ecjia_config::instance()->set_addon_config('user_integrate_plugins', $plugins, true);
+	         
+	        return true;
+	    }
+	     
+	    return false;
 	}
 }
 
