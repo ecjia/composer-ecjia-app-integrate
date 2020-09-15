@@ -46,6 +46,7 @@
 //
 namespace Ecjia\App\Integrate;
 
+use RC_Service;
 use Royalcms\Component\App\AppParentServiceProvider;
 
 class IntegrateServiceProvider extends  AppParentServiceProvider
@@ -65,11 +66,14 @@ class IntegrateServiceProvider extends  AppParentServiceProvider
 
     public function register()
     {
+        RC_Service::addService('admin_purview', 'integrate', \Ecjia\App\Integrate\Services\IntegrateAdminPurviewService::class);
+        RC_Service::addService('integrate_install', 'integrate', \Ecjia\App\Integrate\Services\IntegrateIntegrateInstallService::class);
+        RC_Service::addService('integrate_uninstall', 'integrate', \Ecjia\App\Integrate\Services\IntegrateIntegrateUninstallService::class);
+        RC_Service::addService('plugin_menu', 'integrate', \Ecjia\App\Integrate\Services\IntegratePluginMenuService::class);
+
         $this->registerIntegrateManager();
 
         $this->registerIntegratePlugin();
-
-
         $this->loadAlias();
     }
 
