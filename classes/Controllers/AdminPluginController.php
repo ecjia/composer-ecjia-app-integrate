@@ -47,6 +47,7 @@
 namespace Ecjia\App\Integrate\Controllers;
 
 use admin_nav_here;
+use admin_notice;
 use ecjia;
 use ecjia_admin;
 use ecjia_config;
@@ -54,6 +55,7 @@ use ecjia_integrate;
 use ecjia_screen;
 use RC_App;
 use RC_DB;
+use RC_Hook;
 use RC_Script;
 use RC_Style;
 use RC_Uri;
@@ -141,12 +143,7 @@ class AdminPluginController extends ecjia_admin
 
 	    $code = strval($_GET['code']);
 
-	    
-	    if ($code == 'ecshop' || $code == 'ecjia') {
-	        $error_message = __('当您采用ECJia会员系统时，无须进行设置。', 'integrate');
-	        $this->assign('error_message', $error_message);
-	    } else {
-
+	    if ( ! in_array($code, array('ecshop', 'ecjia')) ) {
             $cfg = unserialize(ecjia::config('integrate_config'));
 
             if ($code != 'ucenter') {
@@ -163,9 +160,14 @@ class AdminPluginController extends ecjia_admin
             $plugin_lang = [];
         }
 
+	    if (isset($plugin_lang['integrate_readme'])) {
+            ecjia_screen::get_current_screen()->add_admin_notice(new admin_notice($plugin_lang['integrate_readme'], 'alert-info'));
+        }
+
 	    $this->assign('code',         $code);
 	    $this->assign('form_action',  RC_Uri::url('integrate/admin_plugin/save_config'));
         $this->assign('plugin_lang', $plugin_lang);
+
 	    return $this->display('integrates_setup.dwt');
 	}
 	
@@ -178,22 +180,18 @@ class AdminPluginController extends ecjia_admin
 
 		$code = strval($_GET['code']);
 
-		if ($code == 'ucenter') {
-		    ecjia_config::instance()->write_config('integrate_code', 'ucenter'); 
-		} elseif ($code == 'ecshop') {
-			ecjia_config::instance()->write_config('integrate_code', 'ecshop');
-		} elseif ($code == 'ecjia') {
-		    ecjia_config::instance()->write_config('integrate_code', 'ecjia');
-		} else {
-		    //如果有标记，清空标记
-			$data = array(
-				'flag' 	=> 0,
-				'alias' => ''
-			);
-			RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->where('flag', '>', 0)->update($data);
-			
-			ecjia_config::instance()->write_config('integrate_code', $code);
-		}
+        if ( ! in_array($code, array('ecshop', 'ecjia', 'ucenter', 'ecjiauc')) ) {
+            //如果有标记，清空标记
+            $data = array(
+                'flag' 	=> 0,
+                'alias' => ''
+            );
+            RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->where('flag', '>', 0)->update($data);
+        }
+
+        RC_Hook::do_action('activate_integrate_user_plugin', $code);
+
+        ecjia_config::instance()->write_config('integrate_code', $code);
 		ecjia_config::instance()->write_config('points_rule', '');
 		
 		return $this->showmessage(__('成功启用会员整合插件', 'integrate'), ecjia::MSGTYPE_JSON | ecjia::MSGSTAT_SUCCESS, array('pjaxurl' => RC_Uri::url('integrate/admin_plugin/init')));
@@ -208,9 +206,9 @@ class AdminPluginController extends ecjia_admin
 
 		$code = strval($_POST['code']);
 
-		if ($code != 'ecjiauc' && $code != 'ecjia' && $code != 'ucenter' && $code != 'ecshop') {
-		    return $this->showmessage(__('目前仅支持UCenter方式的会员整合。', 'integrate'), ecjia::MSGTYPE_JSON | ecjia::MSGSTAT_ERROR);
-		}
+        if ( ! in_array($code, array('ecshop', 'ecjia', 'ucenter', 'ecjiauc')) ) {
+            return $this->showmessage(__('目前仅支持UCenter方式的会员整合。', 'integrate'), ecjia::MSGTYPE_JSON | ecjia::MSGSTAT_ERROR);
+        }
 		
 		$cfg = unserialize(ecjia::config('integrate_config'));
 		$_POST['cfg']['quiet'] = 1;
