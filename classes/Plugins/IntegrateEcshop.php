@@ -50,7 +50,7 @@ namespace Ecjia\App\Integrate\Plugins;
 use Ecjia\App\Integrate\UserIntegrateDatabaseAbstract;
 use RC_DB;
 
-class IntegrateEcjia extends UserIntegrateDatabaseAbstract
+class IntegrateEcshop extends UserIntegrateDatabaseAbstract
 {
 
 
@@ -65,16 +65,20 @@ class IntegrateEcjia extends UserIntegrateDatabaseAbstract
     /**
      * 获取插件代号
      *
+     * @return string
      * @see \Ecjia\Component\Plugin\Contracts\PluginInterface::getCode()
      */
     public function getCode()
     {
-        return 'ecjia';
+        return 'ecshop';
     }
 
     /**
      * 加载配置文件
      *
+     * @param null $key
+     * @param null $default
+     * @return null
      * @see \Ecjia\Component\Plugin\Contracts\PluginInterface::loadConfig()
      */
     public function loadConfig($key = null, $default = null)
@@ -85,14 +89,17 @@ class IntegrateEcjia extends UserIntegrateDatabaseAbstract
     /**
      * 加载语言包
      *
+     * @param null $key
+     * @param null $default
+     * @return array|mixed
      * @see \Ecjia\Component\Plugin\Contracts\PluginInterface::loadLanguage()
      */
     public function loadLanguage($key = null, $default = null)
     {
         $lang = array(
             'integrate_readme' => __('当您采用ECJia会员系统时，无须进行设置。', 'integrate'),
-            'ecjia'            => __('ECJia', 'integrate'),
-            'ecjia_desc'       => __('ECJia系统内置的默认会员系统', 'integrate'),
+            'ecshop'           => __('ECJia', 'integrate'),
+            'ecshop_desc'      => __('ECJia系统内置的默认会员系统', 'integrate'),
         );
 
         return $this->getArrayData($lang, $key, $default);
@@ -108,8 +115,8 @@ class IntegrateEcjia extends UserIntegrateDatabaseAbstract
         return collect([
             'integrate_id'   => 1,
             'integrate_code' => $this->getCode(),
-            'integrate_name' => $this->loadLanguage('ecjia'),
-            'integrate_desc' => $this->loadLanguage('ecjia_desc'),
+            'integrate_name' => $this->loadLanguage('ecshop'),
+            'integrate_desc' => $this->loadLanguage('ecshop_desc'),
             'configure'      => null,
         ]);
     }
@@ -119,6 +126,7 @@ class IntegrateEcjia extends UserIntegrateDatabaseAbstract
      * 检查指定用户是否存在及密码是否正确(重载基类checkUser函数，支持zc加密方法)
      *
      * @param string $username 用户名
+     * @param null $password
      * @return  int
      */
     function checkUser($username, $password = null)
