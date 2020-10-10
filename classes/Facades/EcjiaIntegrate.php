@@ -48,6 +48,15 @@ namespace Ecjia\App\Integrate\Facades;
 
 use Royalcms\Component\Support\Facades\Facade;
 
+/**
+ * Class EcjiaIntegrate
+ * @package Ecjia\App\Integrate\Facades
+ *
+ * @method static \Ecjia\App\Integrate\IntegratePlugin plugin()
+ * @method static bool login($username, $password, $remember = null) User login function
+ * @method static void logout() User logs out
+ * @method static void integrate_list() Get all available plugins
+ */
 class EcjiaIntegrate extends Facade
 {
 
