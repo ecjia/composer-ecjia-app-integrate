@@ -47,6 +47,7 @@
 namespace Ecjia\App\Integrate;
 
 use Ecjia\Component\Plugin\AbstractPlugin;
+use ecjia_app;
 use RC_DB;
 use RC_Api;
 use RC_Session;
@@ -350,8 +351,8 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
         //删除用户抽奖记录
         //删除用户微信发送消息记录
         //删除用户微信客服消息记录
-
-        return RC_Api::apis('user_remove_cleardata', array('user_id' => $user_id));
+        $apps     = ecjia_app::installed_app_floders();
+        return RC_Api::apis($apps, 'user_remove_cleardata', array('user_id' => $user_id));
     }
 
     /**
