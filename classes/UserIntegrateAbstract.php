@@ -210,7 +210,7 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
         }
 
         //先判断是否有相同手机号，再判断是否有相同用户名
-        if (! empty($mobile)) {
+        if (!empty($mobile)) {
             $main_profile = $this->getProfileByMobile($mobile);
             if (empty($main_profile)) {
                 $main_profile = $this->getProfileByName($username);
@@ -218,8 +218,7 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
                     return false;
                 }
             }
-        }
-        else {
+        } else {
             $main_profile = $this->getProfileByName($username);
             if (empty($main_profile)) {
                 return false;
@@ -227,7 +226,7 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
         }
 
         $profile = RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')
-            ->select('user_name', 'email', 'password', 'sex', 'birthday')
+            ->select('user_name', 'email', 'password', 'sex', 'birthday', 'mobile_phone')
             ->where('user_name', $username)
             ->first();
 
@@ -235,21 +234,23 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
             /* 向用户表插入一条新记录 */
             if (empty($md5password)) {
                 $data = array(
-                    'user_name'  => $username,
-                    'email'      => $main_profile['email'],
-                    'sex'        => $main_profile['sex'],
-                    'birthday'   => $main_profile['birthday'] ,
-                    'reg_time'   => $main_profile['reg_time'],
+                    'user_name'    => $username,
+                    'email'        => $main_profile['email'],
+                    'sex'          => $main_profile['sex'],
+                    'birthday'     => $main_profile['birthday'],
+                    'reg_time'     => $main_profile['reg_time'],
+                    'mobile_phone' => $mobile,
                 );
                 RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->insert($data);
             } else {
                 $data = array(
-                    'user_name'  => $username,
-                    'email'      => $main_profile['email'],
-                    'sex'        => $main_profile['sex'],
-                    'birthday'   => $main_profile['birthday'] ,
-                    'reg_time'   => $main_profile['reg_time'],
-                    'password'   => $md5password
+                    'user_name'    => $username,
+                    'email'        => $main_profile['email'],
+                    'sex'          => $main_profile['sex'],
+                    'birthday'     => $main_profile['birthday'],
+                    'reg_time'     => $main_profile['reg_time'],
+                    'password'     => $md5password,
+                    'mobile_phone' => $mobile,
                 );
                 RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->insert($data);
             }
@@ -270,6 +271,10 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
 
             if ((!empty($md5password)) && ($md5password != $profile['password'])) {
                 $values['password'] = $md5password;
+            }
+
+            if ($main_profile['mobile_phone'] != $profile['mobile_phone']) {
+                $values['mobile_phone'] = $main_profile['mobile_phone'];
             }
 
             if (empty($values)) {
@@ -299,15 +304,15 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
         //删除用户抽奖记录
         //删除用户微信发送消息记录
         //删除用户微信客服消息记录
-        $apps     = ecjia_app::installed_app_floders();
+        $apps = ecjia_app::installed_app_floders();
         return RC_Api::apis($apps, 'user_remove_cleardata', array('user_id' => $user_id));
     }
 
     /**
      *  用户登录函数
      *
-     * @param   string  $username
-     * @param   string  $password
+     * @param string $username
+     * @param string $password
      *
      * @return boolean
      */
@@ -319,28 +324,28 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
             }
             $this->setSession($username);
             $this->setCookie($username, $remember);
-        
+
             return true;
         } else {
             return false;
         }
-        
+
     }
-    
-    
+
+
     /**
      *
      * 用户退出登录
-     * 
+     *
      * @return void
      */
     public function logout()
     {
         //清除cookie
-        $this->clearCookie(); 
-        
+        $this->clearCookie();
+
         //清除session
-        $this->clearSession(); 
+        $this->clearSession();
     }
 
     /**
@@ -399,7 +404,7 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
     {
         /* 摧毁cookie */
         $time = time() - 3600;
-        setcookie("ECJIA[user_id]",  '', $time, $this->cookie_path);
+        setcookie("ECJIA[user_id]", '', $time, $this->cookie_path);
         setcookie("ECJIA[password]", '', $time, $this->cookie_path);
     }
 
@@ -436,7 +441,6 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
     {
         RC_Session::destroy();
     }
-    
-    
-    
+
+
 }
