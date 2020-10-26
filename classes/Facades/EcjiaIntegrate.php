@@ -46,6 +46,7 @@
 //
 namespace Ecjia\App\Integrate\Facades;
 
+use Ecjia\App\Integrate\Password;
 use Royalcms\Component\Support\Facades\Facade;
 
 /**
@@ -56,6 +57,33 @@ use Royalcms\Component\Support\Facades\Facade;
  * @method static bool login($username, $password, $remember = null) User login function
  * @method static void logout() User logs out
  * @method static void integrate_list() Get all available plugins
+ * @method static \ecjia_error getError()
+ * @method static string getErrorMessage()
+ * @method static bool needSync()
+ * @method static \Royalcms\Component\Support\Collection getPluginMateData() 获取插件的元数据
+ * @method static array getProfileByName($username) 获取指定用户的信息
+ * @method static array getProfileById($id) 获取指定用户的信息
+ * @method static array getProfileByMobile($mobile) 获取指定用户的信息
+ * @method static array compilePassword($password, $md5password = null, $salt = null, $type = Password::PWD_MD5) 编译密码函数 包含参数为 $password, $md5password, $salt, $type
+ * @method static array getUserInfo($username)
+ * @method static array getPointsName()
+ * @method static void syncRemoveUser($username)
+ * @method static bool sync($username, $password = null, $md5password = null) 会员同步，使用第三方用户数据表同步时，将用户信息同步一份到ecjia_users数据表中
+ * @method static mixed userRemoveClearData($user_id) 删除用户时，清除用户数据
+ * @method static bool checkCookie() 检查cookie是正确，返回用户名
+ * @method static void setCookie($username, $remember = null) 设置cookie
+ * @method static bool getCookie() 根据登录状态设置cookie
+ * @method static bool clearCookie() 清除记住密码的cookie
+ * @method static void setSession($username = null) 设置指定用户SESSION
+ * @method static void clearSession() 清除Session
+ * @method static bool addUser($username, $password, $email, $mobile = null, $gender = -1, $bday = null, $reg_date = 0, $md5password = null) 添加一个新用户
+ * @method static bool editUser($params) 编辑用户信息($password, $email, $gender, $bday)
+ * @method static mixed updateNewEmailForNotValidated($username) 修改email后，设email为新mail，设置为未验证
+ * @method static bool | null removeUser($username) 删除用户
+ * @method static bool checkUser($username, $password = null) 检查指定用户是否存在及密码是否正确
+ * @method static bool checkEmail($email, $exclude_username = null) 检查指定邮箱是否存在
+ * @method static bool checkMobile($mobile, $exclude_username = null) 检查指定手机号是否存在
+ *
  */
 class EcjiaIntegrate extends Facade
 {
