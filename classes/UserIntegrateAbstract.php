@@ -202,16 +202,28 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
      * @param null $md5password
      * @return bool
      */
-    public function sync($username, $password = null, $md5password = null)
+    public function sync($username, $password = null, $md5password = null, $mobile = null)
     {
 
         if ((!empty($password)) && empty($md5password)) {
             $md5password = md5($password);
         }
 
-        $main_profile = $this->getProfileByName($username);
-        if (empty($main_profile)) {
-            return false;
+        //先判断是否有相同手机号，再判断是否有相同用户名
+        if (! empty($mobile)) {
+            $main_profile = $this->getProfileByMobile($mobile);
+            if (empty($main_profile)) {
+                $main_profile = $this->getProfileByName($username);
+                if (empty($main_profile)) {
+                    return false;
+                }
+            }
+        }
+        else {
+            $main_profile = $this->getProfileByName($username);
+            if (empty($main_profile)) {
+                return false;
+            }
         }
 
         $profile = RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')
