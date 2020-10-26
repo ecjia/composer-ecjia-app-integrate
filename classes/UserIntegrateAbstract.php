@@ -46,6 +46,7 @@
 //
 namespace Ecjia\App\Integrate;
 
+use Ecjia\App\Integrate\Enums\UserIntegrateErrorEnum;
 use Ecjia\Component\Plugin\AbstractPlugin;
 use ecjia_app;
 use RC_DB;
@@ -61,71 +62,6 @@ use RC_Ip;
  */
 abstract class UserIntegrateAbstract extends AbstractPlugin implements UserIntegrateInterface
 {
-
-    /**
-     * 用户名已经存在
-     */
-    const ERR_USERNAME_EXISTS       = 1;
-
-    /**
-     * Email已经存在
-     */
-    const ERR_EMAIL_EXISTS          = 2;
-
-    /**
-     * 无效的user_id
-     */
-    const ERR_INVALID_USERID        = 3;
-
-    /**
-     * 无效的用户名
-     */
-    const ERR_INVALID_USERNAME      = 4;
-
-    /**
-     * 密码错误
-     */
-    const ERR_INVALID_PASSWORD      = 5;
-
-    /**
-     * Email错误
-     */
-    const ERR_INVALID_EMAIL         = 6;
-
-    /**
-     * 用户名不允许注册
-     */
-    const ERR_USERNAME_NOT_ALLOW    = 7;
-
-    /**
-     * EMAIL不允许注册
-     */
-    const ERR_EMAIL_NOT_ALLOW       = 8;
-
-    /**
-     * 手机号已经存在
-     */
-    const ERR_MOBILE_EXISTS         = 11;
-
-    /**
-     * 手机号错误
-     */
-    const ERR_INVALID_MOBILE        = 12;
-
-
-    protected $error_message = [
-        self::ERR_USERNAME_EXISTS         => '用户名已经存在',
-        self::ERR_EMAIL_EXISTS            => '邮箱已经存在',
-        self::ERR_INVALID_USERID          => '无效的用户ID',
-        self::ERR_INVALID_USERNAME        => '无效的用户名',
-        self::ERR_INVALID_PASSWORD        => '密码错误',
-        self::ERR_INVALID_EMAIL           => '邮箱地址错误',
-        self::ERR_USERNAME_NOT_ALLOW      => '用户名不允许注册',
-        self::ERR_EMAIL_NOT_ALLOW         => '邮箱不允许注册',
-        self::ERR_MOBILE_EXISTS           => '手机号已经存在',
-        self::ERR_INVALID_MOBILE          => '手机号错误',
-    ];
-
 
     protected $cookie_domain;
 
@@ -152,7 +88,7 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
             return $this->error->get_error_message();
         }
 
-        return array_get($this->error_message, $this->error, $this->error);
+        return (new UserIntegrateErrorEnum())->transName($this->error->get_error_code());
     }
 
     public function needSync()

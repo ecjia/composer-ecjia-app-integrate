@@ -46,6 +46,7 @@
 //
 namespace Ecjia\App\Integrate;
 
+use Ecjia\App\Integrate\Enums\UserIntegrateErrorEnum;
 use Ecjia\App\Integrate\Tables\EcjiaUserTable;
 use RC_DB;
 
@@ -84,19 +85,19 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
     {
         /* 将用户添加到整合方 */
         if ($this->checkUser($username) > 0) {
-            $this->error = self::ERR_USERNAME_EXISTS;
+            $this->error = UserIntegrateErrorEnum::ERR_USERNAME_EXISTS;
             return false;
         }
 
         /* 检查email是否重复 */
         if (! is_null($email) && $this->checkEmail($email)) {
-            $this->error = self::ERR_EMAIL_EXISTS;
+            $this->error = UserIntegrateErrorEnum::ERR_EMAIL_EXISTS;
             return false;
         }
 
         /* 检查mobile是否重复 */
         if (! is_null($mobile) && $this->checkMobile($mobile)) {
-            $this->error = self::ERR_MOBILE_EXISTS;
+            $this->error = UserIntegrateErrorEnum::ERR_MOBILE_EXISTS;
             return false;
         }
 
@@ -179,7 +180,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
         if ((!empty($email)) && ! is_null($this->user_table->getFieldEmail())) {
             /* 检查email是否重复 */
             if ($this->checkEmail($email, $username) > 0) {
-                $this->error = self::ERR_EMAIL_EXISTS;
+                $this->error = UserIntegrateErrorEnum::ERR_EMAIL_EXISTS;
                 return false;
             }
 
@@ -301,7 +302,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
         }
 
         if ($field_id > 0) {
-            $this->error = self::ERR_EMAIL_EXISTS;
+            $this->error = UserIntegrateErrorEnum::ERR_EMAIL_EXISTS;
             return true;
         }
         return false;
@@ -329,7 +330,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
         }
 
         if ($field_id > 0) {
-            $this->error = self::ERR_MOBILE_EXISTS;
+            $this->error = UserIntegrateErrorEnum::ERR_MOBILE_EXISTS;
             return true;
         }
         return false;
@@ -339,7 +340,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
      *  获取指定用户的信息
      *
      * @param $username
-     * @return array
+     * @return array|\Illuminate\Database\Eloquent\Model|\Illuminate\Database\Query\Builder|object
      */
     public function getProfileByName($username)
     {
@@ -359,11 +360,11 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
     }
 
     /**
- *  获取指定用户的信息
- *
- * @param $id
- * @return array
- */
+     *  获取指定用户的信息
+     *
+     * @param $id
+     * @return array|\Illuminate\Database\Eloquent\Model|\Illuminate\Database\Query\Builder|object
+     */
     public function getProfileById($id)
     {
         $row = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())->selectRaw(
@@ -385,7 +386,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
      *  获取指定用户的信息
      *
      * @param $mobile
-     * @return array
+     * @return array|\Illuminate\Database\Eloquent\Model|\Illuminate\Database\Query\Builder|object
      */
     public function getProfileByMobile($mobile)
     {
@@ -408,7 +409,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
      * 获取用户积分
      *
      * @param $username
-     * @return bool
+     * @return bool|\Illuminate\Database\Eloquent\Model|\Illuminate\Database\Query\Builder|object
      */
     public function getPoints($username)
     {
@@ -458,7 +459,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
      * 检查有无重名用户，有则返回重名用户
      *
      * @param $user_list
-     * @return null|array
+     * @return array|\Illuminate\Support\Collection
      */
     public function testConflict($user_list)
     {
