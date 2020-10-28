@@ -56,6 +56,7 @@ use Royalcms\Component\Support\Facades\Facade;
  * @method static \Ecjia\App\Integrate\IntegratePlugin plugin()
  * @method static bool login($username, $password, $remember = null) User login function
  * @method static void logout() User logs out
+ * @method static \Ecjia\Component\Plugin\AbstractPlugin local() Get Local user instance
  * @method static void integrate_list() Get all available plugins
  * @method static \ecjia_error getError()
  * @method static string getErrorMessage()

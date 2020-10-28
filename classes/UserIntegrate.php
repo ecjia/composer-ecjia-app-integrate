@@ -54,6 +54,7 @@
 namespace Ecjia\App\Integrate;
 
 use RC_Hook;
+use RC_Session;
 
 /**
  * Class UserIntegrate
@@ -65,7 +66,7 @@ class UserIntegrate
     /**
      * @var UserIntegrateAbstract
      */
-    protected static $instance;
+    protected $instance;
 
     public function __construct()
     {
@@ -77,7 +78,7 @@ class UserIntegrate
      *
      * @return array
      */
-    public static function charset_list()
+    public function charset_list()
     {
         $charset_list = array(
             'UTF8'   => 'UTF-8',
@@ -89,23 +90,24 @@ class UserIntegrate
 
     /**
      * Initialize member data integration class
-     *
-     * @return mixed
+     * @return Plugins\IntegrateEcjia|UserIntegrateAbstract|\Ecjia\Component\Plugin\AbstractPlugin|\ecjia_error|null
      */
-    public static function init_users()
+    public function init_users()
     {
-        if (! is_null(self::$instance)) {
-            return self::$instance;
+        if (! is_null($this->instance)) {
+            return $this->instance;
         }
 
         try {
-            self::$instance = with(new IntegratePlugin())->defaultChannel();
+            $this->instance = $this->plugin()->defaultChannel();
 
-            return self::$instance;
+            return $this->instance;
         }
         catch (\InvalidArgumentException $e) {
             ecjia_log_error($e->getMessage(), $e);
         }
+
+        return null;
     }
 
     /**
@@ -124,22 +126,30 @@ class UserIntegrate
         return royalcms('ecjia.integrate.plugin');
     }
 
+    /**
+     * Get Local user instance
+     * @return Plugins\IntegrateEcjia|UserIntegrateAbstract|\Ecjia\Component\Plugin\AbstractPlugin
+     */
+    public function local()
+    {
+        return royalcms('ecjia.integrate.plugin')->channel('ecjia');
+    }
 
     /**
      *  User login function
      *
-     * @param   string  $username
-     * @param   string  $password
-     *
+     * @param string $username
+     * @param string $password
+     * @param null $remember
      * @return boolean
      */
     public function login($username, $password, $remember = null)
     {
-        $row = self::$instance->getUserInfo($username);
+        $row = $this->instance->getUserInfo($username);
 
         RC_Hook::do_action('ecjia_user_login_before', $row);
 
-        $result = self::$instance->login($username, $password, $remember);
+        $result = $this->instance->login($username, $password, $remember);
 
         RC_Hook::do_action('ecjia_user_login_after', $row);
 
@@ -150,16 +160,25 @@ class UserIntegrate
      *
      * User logs out
      *
+     * @param null $username
      * @return void
      */
-    public function logout()
+    public function logout($username = null)
     {
-        RC_Hook::do_action('ecjia_user_logout_before');
+        if (empty($user_name)) {
+            $username = RC_Session::get('user_name');
+        }
 
-        self::$instance->logout();
+        $row = $this->instance->getUserInfo($username);
+
+        RC_Hook::do_action('ecjia_user_logout_before', $row);
+
+        $this->instance->logout();
 
         //Destroy the session
         session()->destroy();
+
+        RC_Hook::do_action('ecjia_user_logout_after', $row);
     }
 
 
@@ -172,7 +191,7 @@ class UserIntegrate
      */
     public function __call($method, $parameters)
     {
-        return call_user_func_array([self::$instance, $method], $parameters);
+        return call_user_func_array([$this->instance, $method], $parameters);
     }
 
 }
