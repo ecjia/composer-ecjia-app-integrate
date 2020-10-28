@@ -49,6 +49,7 @@ namespace Ecjia\App\Integrate;
 use Ecjia\App\Integrate\Enums\UserIntegrateErrorEnum;
 use Ecjia\Component\Plugin\AbstractPlugin;
 use ecjia_app;
+use ecjia_error;
 use RC_DB;
 use RC_Api;
 use RC_Session;
@@ -200,6 +201,7 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
      * @param string $username
      * @param null $password
      * @param null $md5password
+     * @param null $mobile
      * @return bool
      */
     public function sync($username, $password = null, $md5password = null, $mobile = null)
@@ -283,6 +285,150 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
                 RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->where('user_name', $username)->update($values);
                 return true;
             }
+        }
+    }
+
+    /**
+     * 会员同步
+     * 使用第三方用户数据表同步时，将用户信息同步一份到ecjia_users数据表中
+     *
+     * @param string $mobile
+     * @return ecjia_error|integer
+     */
+    public function syncWithMobile($mobile)
+    {
+        //先判断是否有相同手机号，再判断是否有相同用户名
+        if (empty($mobile)) {
+            return new ecjia_error('error_message', __('手机号不能为空', 'integrate'));
+        }
+
+        $main_profile = $this->getProfileByMobile($mobile);
+        if (empty($main_profile)) {
+            return new ecjia_error('error_message', __('用户未找到', 'integrate'));
+        }
+
+        $username = $main_profile['user_name'];
+
+        $profile = RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')
+            ->select('user_id', 'user_name', 'email', 'password', 'sex', 'birthday', 'mobile_phone')
+            ->where('user_name', $username)
+            ->first();
+
+        if (empty($profile)) {
+            /* 向用户表插入一条新记录 */
+            $data = array(
+                'user_name'    => $username,
+                'email'        => $main_profile['email'],
+                'sex'          => $main_profile['sex'],
+                'birthday'     => $main_profile['birthday'],
+                'reg_time'     => $main_profile['reg_time'],
+                'mobile_phone' => $mobile,
+            );
+
+            $user_id = RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->insertGetId($data);
+            return $user_id;
+        }
+        else {
+            $values = array();
+            if ($main_profile['email'] != $profile['email']) {
+                $values['email'] = $main_profile['email'];
+            }
+
+            if ($main_profile['sex'] != $profile['sex']) {
+                $values['sex'] = $main_profile['sex'];
+            }
+
+            if ($main_profile['birthday'] != $profile['birthday']) {
+                $values['birthday'] = $main_profile['birthday'];
+            }
+
+            if ((!empty($md5password)) && ($md5password != $profile['password'])) {
+                $values['password'] = $md5password;
+            }
+
+            if ($main_profile['mobile_phone'] != $profile['mobile_phone']) {
+                $values['mobile_phone'] = $main_profile['mobile_phone'];
+            }
+
+            if (empty($values)) {
+                return $profile['user_id'];
+            }
+
+            RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->where('user_name', $username)->update($values);
+
+            return $profile['user_id'];
+        }
+    }
+
+    /**
+     * 会员同步
+     * 使用第三方用户数据表同步时，将用户信息同步一份到ecjia_users数据表中
+     *
+     * @param string $mobile
+     * @return ecjia_error|bool
+     */
+    public function syncWithUsername($username)
+    {
+        //先判断是否有相同手机号，再判断是否有相同用户名
+        if (empty($username)) {
+            return new ecjia_error('error_message', __('用户名不能为空', 'integrate'));
+        }
+
+        $main_profile = $this->getProfileByName($username);
+        if (empty($main_profile)) {
+            return new ecjia_error('error_message', __('用户未找到', 'integrate'));
+        }
+
+        $mobile = $main_profile['mobile_phone'];
+
+        $profile = RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')
+            ->select('user_id', 'user_name', 'email', 'password', 'sex', 'birthday', 'mobile_phone')
+            ->where('user_name', $username)
+            ->first();
+
+        if (empty($profile)) {
+            /* 向用户表插入一条新记录 */
+            $data = array(
+                'user_name'    => $username,
+                'email'        => $main_profile['email'],
+                'sex'          => $main_profile['sex'],
+                'birthday'     => $main_profile['birthday'],
+                'reg_time'     => $main_profile['reg_time'],
+                'mobile_phone' => $mobile,
+            );
+
+            $user_id = RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->insertGetId($data);
+            return $user_id;
+        }
+        else {
+            $values = array();
+            if ($main_profile['email'] != $profile['email']) {
+                $values['email'] = $main_profile['email'];
+            }
+
+            if ($main_profile['sex'] != $profile['sex']) {
+                $values['sex'] = $main_profile['sex'];
+            }
+
+            if ($main_profile['birthday'] != $profile['birthday']) {
+                $values['birthday'] = $main_profile['birthday'];
+            }
+
+            if ((!empty($md5password)) && ($md5password != $profile['password'])) {
+                $values['password'] = $md5password;
+            }
+
+            if ($main_profile['mobile_phone'] != $profile['mobile_phone']) {
+                $values['mobile_phone'] = $main_profile['mobile_phone'];
+            }
+
+            if (empty($values)) {
+                return $profile['user_id'];
+            }
+
+            RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->where('user_name', $username)->update($values);
+
+            return $profile['user_id'];
         }
     }
 
