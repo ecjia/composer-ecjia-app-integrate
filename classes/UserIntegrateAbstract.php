@@ -69,7 +69,7 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
     protected $cookie_path;
 
     /* 是否需要同步数据到商城 */
-    protected $need_sync = true;
+    protected $need_sync = false;
 
     protected $error = 0;
 
@@ -564,18 +564,16 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
     public function setSession($username = null)
     {
         if (empty($username)) {
-
             RC_Session::destroy();
-
         } else {
-            $row = RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->select('user_id', 'password', 'email')->where('user_name', $username)->first();
+            $row = RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->select('user_id', 'password', 'email', 'mobile_phone')->where('user_name', $username)->first();
             if ($row) {
-                RC_Session::set('user_id', $row['user_id']);
-                RC_Session::set('user_name', $username);
-                RC_Session::set('session_user_id', $row['user_id']);
-                RC_Session::set('session_user_type', 'user');
-                RC_Session::set('email', $row['email']);
-                RC_Session::set('ip', RC_Ip::client_ip());
+                (new UserSession())
+                    ->setUserId($row['user_id'])
+                    ->setUserName($username)
+                    ->setUserEmail($row['email'])
+                    ->setUserMobile($row['mobile_phone'])
+                    ->createLoginSession();
             }
         }
     }

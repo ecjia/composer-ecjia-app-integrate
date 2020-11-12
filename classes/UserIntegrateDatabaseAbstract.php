@@ -49,6 +49,7 @@ namespace Ecjia\App\Integrate;
 use Ecjia\App\Integrate\Enums\UserIntegrateErrorEnum;
 use Ecjia\App\Integrate\Tables\EcjiaUserTable;
 use RC_DB;
+use RC_Time;
 
 /**
  * 会员融合插件抽象类
@@ -61,11 +62,13 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
 
     protected $user_table;
 
+    protected $database_connection;
 
     public function __construct()
     {
         $this->user_table = new EcjiaUserTable();
 
+        $this->database_connection = RC_DB::connection(config('cashier.database_connection', 'default'));
     }
 
     /**
@@ -74,31 +77,53 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
      * @param $username
      * @param null $password
      * @param string $email
-     * @param string $mobile
+     * @param string|null $mobile
      * @param int $gender
-     * @param int $bday
+     * @param null $bday
      * @param int $reg_date
-     * @param string $md5password
+     * @param null $md5password
      * @return bool
      */
     public function addUser($username, $password, $email, $mobile = null, $gender = -1, $bday = null, $reg_date = 0, $md5password = null)
     {
         /* 将用户添加到整合方 */
         if ($this->checkUser($username) > 0) {
+            if ($this->need_sync) {
+                $result = $this->sync($username, $password, $md5password, $mobile);
+                if ($result) {
+                    return true;
+                }
+            }
             $this->error = UserIntegrateErrorEnum::ERR_USERNAME_EXISTS;
             return false;
         }
 
         /* 检查email是否重复 */
         if (! is_null($email) && $this->checkEmail($email)) {
+            if ($this->need_sync) {
+                $result = $this->sync($username, $password, $md5password, $mobile);
+                if ($result) {
+                    return true;
+                }
+            }
             $this->error = UserIntegrateErrorEnum::ERR_EMAIL_EXISTS;
             return false;
         }
 
         /* 检查mobile是否重复 */
         if (! is_null($mobile) && $this->checkMobile($mobile)) {
+            if ($this->need_sync) {
+                $result = $this->sync($username, $password, $md5password, $mobile);
+                if ($result) {
+                    return true;
+                }
+            }
             $this->error = UserIntegrateErrorEnum::ERR_MOBILE_EXISTS;
             return false;
+        }
+
+        if (empty($reg_date)) {
+            $reg_date = RC_Time::gmtime();
         }
 
         $post_username = $username;
@@ -106,6 +131,9 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
         if ($md5password) {
             $post_password = $this->compilePassword(null, $md5password);
         } else {
+            if (is_null($password)) {
+                $password = $username.'password';
+            }
             $post_password = $this->compilePassword($password);
         }
 
@@ -133,10 +161,10 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
         }
 
         $data = array_combine($fields, $values);
-        RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())->insert($data);
+        $this->database_connection->table($this->user_table->getUserTable())->insert($data);
 
         if ($this->need_sync) {
-            $this->sync($username, $password);
+            $this->sync($username, $password, $md5password, $mobile);
         }
 
         return true;
@@ -202,7 +230,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
         }
 
         if ($values) {
-            RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())->where($this->user_table->getFieldName(), $post_username)->update($values);
+            $this->database_connection->table($this->user_table->getUserTable())->where($this->user_table->getFieldName(), $post_username)->update($values);
 
             if ($this->need_sync) {
                 if (empty($md5password)) {
@@ -222,55 +250,48 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
     public function updateNewEmailForNotValidated($username)
     {
         // 新的E-mail，设置为未验证
-        return RC_DB::connection(config('cashier.database_connection', 'default'))->table('users')->where('user_name', $username)->update(array('is_validated' => 0));
+        return $this->database_connection->table('users')->where('user_name', $username)->update(array('is_validated' => 0));
     }
 
     /**
      * 删除用户
      *
      * @param $username
-     * @return
+     * @return bool
      */
     public function removeUser($username)
     {
+        //删除用户
+        $this->database_connection->table($this->user_table->getUserTable())->where($this->user_table->getFieldName(), $username)->delete();
+
         /* 如果需要同步或是ecjia插件执行这部分代码 */
         if ($this->need_sync || $this->getCode() == 'ecjia') {
-
             $this->syncRemoveUser($username);
-
         }
 
-        if ($this->getCode() == 'ecjia')
-        {
-            /* 如果是ecshop插件直接退出 */
-            return null;
-        }
-
-        //删除用户
-        RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())->where($this->user_table->getFieldName(), $username)->delete();
-
-        return false;
+        return true;
     }
 
     /**
      * 检查指定用户是否存在及密码是否正确
      *
-     * @param   string  $username   用户名
-     * @return
+     * @param string $username 用户名
+     * @param string|null $password
+     * @return mixed|null
      */
     public function checkUser($username, $password = null)
     {
 
         /* 如果没有定义密码则只检查用户名 */
         if ($password === null) {
-            $user = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
+            $user = $this->database_connection->table($this->user_table->getUserTable())
                 ->where($this->user_table->getFieldName(), $username)
                 ->value($this->user_table->getFieldId());
 
             return $user;
         } else {
             $password = $this->compilePassword($password);
-            $user = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
+            $user = $this->database_connection->table($this->user_table->getUserTable())
                 ->where($this->user_table->getFieldName(), $username)
                 ->where($this->user_table->getFieldPass(), $password)
                 ->value($this->user_table->getFieldId());
@@ -290,13 +311,13 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
     {
         if ($exclude_username) {
             /* 检查email是否重复，并排除指定的用户名 */
-            $field_id = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
+            $field_id = $this->database_connection->table($this->user_table->getUserTable())
                 ->where($this->user_table->getFieldEmail(), $email)
                 ->where($this->user_table->getFieldName(), '<>', $exclude_username)
                 ->value($this->user_table->getFieldId());
         } else {
             /* 检查email是否重复 */
-            $field_id = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
+            $field_id = $this->database_connection->table($this->user_table->getUserTable())
                 ->where($this->user_table->getFieldEmail(), $email)
                 ->value($this->user_table->getFieldId());
         }
@@ -318,13 +339,13 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
     {
         if ($exclude_username) {
             /* 检查email是否重复，并排除指定的用户名 */
-            $field_id = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
+            $field_id = $this->database_connection->table($this->user_table->getUserTable())
                 ->where($this->user_table->getFieldMobile(), $mobile)
                 ->where($this->user_table->getFieldName(), '<>', $exclude_username)
                 ->value($this->user_table->getFieldId());
         } else {
             /* 检查email是否重复 */
-            $field_id = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
+            $field_id = $this->database_connection->table($this->user_table->getUserTable())
                 ->where($this->user_table->getFieldMobile(), $mobile)
                 ->value($this->user_table->getFieldId());
         }
@@ -344,7 +365,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
      */
     public function getProfileByName($username)
     {
-        $row = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())->selectRaw(
+        $row = $this->database_connection->table($this->user_table->getUserTable())->selectRaw(
             $this->user_table->getFieldId() . ' AS `user_id`, ' .
             $this->user_table->getFieldName() . ' AS `user_name`, ' .
             $this->user_table->getFieldEmail() . ' AS `email`, ' .
@@ -367,7 +388,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
      */
     public function getProfileById($id)
     {
-        $row = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())->selectRaw(
+        $row = $this->database_connection->table($this->user_table->getUserTable())->selectRaw(
             $this->user_table->getFieldId() . ' AS `user_id`, ' .
             $this->user_table->getFieldName() . ' AS `user_name`, ' .
             $this->user_table->getFieldEmail() . ' AS `email`, ' .
@@ -390,7 +411,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
      */
     public function getProfileByMobile($mobile)
     {
-        $row = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())->selectRaw(
+        $row = $this->database_connection->table($this->user_table->getUserTable())->selectRaw(
             $this->user_table->getFieldId() . ' AS `user_id`, ' .
             $this->user_table->getFieldName() . ' AS `user_name`, ' .
             $this->user_table->getFieldEmail() . ' AS `email`, ' .
@@ -416,7 +437,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
         $credits = $this->getPointsName();
         $fileds = array_keys($credits);
         if ($fileds) {
-            $row = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
+            $row = $this->database_connection->table($this->user_table->getUserTable())
                 ->select($this->user_table->getFieldId())
                 ->selectRaw(implode(', ',$fileds))
                 ->where($this->user_table->getFieldName(), $username)
@@ -447,7 +468,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
                 $tmp[$credit] = $credit + $credits[$credit];
             }
 
-            RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
+            $this->database_connection->table($this->user_table->getUserTable())
                 ->where($this->user_table->getFieldName(), $username)
                 ->update($tmp);
         }
@@ -467,7 +488,7 @@ abstract class UserIntegrateDatabaseAbstract extends UserIntegrateAbstract
             return array();
         }
 
-        $user_list = RC_DB::connection(config('cashier.database_connection', 'default'))->table($this->user_table->getUserTable())
+        $user_list = $this->database_connection->table($this->user_table->getUserTable())
             ->select($this->user_table->getFieldName())
             ->whereIn($this->user_table->getFieldName(), $user_list)
             ->get();
