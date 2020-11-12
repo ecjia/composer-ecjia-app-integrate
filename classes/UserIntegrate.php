@@ -70,7 +70,7 @@ class UserIntegrate
 
     public function __construct()
     {
-        self::init_users();
+        $this->instance = $this->getDefaultUserInstance();
     }
 
     /**
@@ -94,20 +94,40 @@ class UserIntegrate
      */
     public function init_users()
     {
-        if (! is_null($this->instance)) {
-            return $this->instance;
-        }
+        return $this->getInstance();
+    }
 
+    /**
+     * @return Plugins\IntegrateEcjia|UserIntegrateAbstract|\Ecjia\Component\Plugin\AbstractPlugin|\ecjia_error
+     */
+    public function getDefaultUserInstance()
+    {
         try {
-            $this->instance = $this->plugin()->defaultChannel();
-
-            return $this->instance;
+            return $this->plugin()->defaultChannel();
         }
         catch (\InvalidArgumentException $e) {
             ecjia_log_error($e->getMessage(), $e);
         }
 
         return null;
+    }
+
+    /**
+     * @return UserIntegrateAbstract
+     */
+    public function getInstance(): UserIntegrateAbstract
+    {
+        return $this->instance;
+    }
+
+    /**
+     * @param UserIntegrateAbstract $instance
+     * @return UserIntegrate
+     */
+    public function setInstance(UserIntegrateAbstract $instance): UserIntegrate
+    {
+        $this->instance = $instance;
+        return $this;
     }
 
     /**
