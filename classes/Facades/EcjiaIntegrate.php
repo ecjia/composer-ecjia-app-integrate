@@ -87,7 +87,7 @@ use Royalcms\Component\Support\Facades\Facade;
  * @method static bool checkEmail($email, $exclude_username = null) 检查指定邮箱是否存在
  * @method static bool checkMobile($mobile, $exclude_username = null) 检查指定手机号是否存在
  * @method static integer syncWithMobile($mobile) 会员同步
- * @method static integer syncWithUsername($username) 会员同步
+ * @method static string syncWithUsername($username) 会员同步
  *
  */
 class EcjiaIntegrate extends Facade
