@@ -71,6 +71,11 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
     /* 是否需要同步数据到商城 */
     protected $need_sync = false;
 
+    /**
+     * $error 变量值默认为整型数字，支持为ecjia_error对象，传递更多错误信息
+     * 后期进行统一封装
+     * @var int | ecjia_error
+     */
     protected $error = 0;
 
 
@@ -89,7 +94,7 @@ abstract class UserIntegrateAbstract extends AbstractPlugin implements UserInteg
             return $this->error->get_error_message();
         }
 
-        return (new UserIntegrateErrorEnum())->transName($this->error->get_error_code());
+        return (new UserIntegrateErrorEnum())->transName($this->error);
     }
 
     public function needSync()
