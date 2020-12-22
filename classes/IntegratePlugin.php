@@ -46,8 +46,10 @@
 //
 namespace Ecjia\App\Integrate;
 
+use Ecjia\App\Integrate\Plugins\IntegrateEcshop;
 use Ecjia\Component\Plugin\PluginModel;
 use Ecjia\App\Integrate\Plugins\IntegrateEcjia;
+use Ecjia\Component\Plugin\Storages\UserIntegratePluginStorage;
 use ecjia_config;
 use ecjia_error;
 use ecjia;
@@ -65,10 +67,9 @@ class IntegratePlugin extends PluginModel
      */
     public function getInstalledPlugins()
     {
-        return ecjia_config::getAddonConfig('user_integrate_plugins', true);
+        return (new UserIntegratePluginStorage())->getPlugins();
     }
-    
-    
+
     /**
      * 获取数据库中启用的插件列表
      */
@@ -245,20 +246,21 @@ class IntegratePlugin extends PluginModel
         }
 
         if ($code == 'ecjia') {
-
             $handler = new IntegrateEcjia();
-
-        } else {
-
+        }
+        elseif ($code == 'ecshop') {
+            $handler = new IntegrateEcshop();
+        }
+        else {
             $config = $this->configData($code);
             if (empty($config)) {
                 $config = [];
             }
             $handler = $this->pluginInstance($code, $config);
-            if (!$handler) {
-                return new ecjia_error('plugin_not_found', $code . ' plugin not found!');
-            }
+        }
 
+        if (!$handler) {
+            return new ecjia_error('plugin_not_found', $code . ' plugin not found!');
         }
 
         return $handler;
