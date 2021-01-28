@@ -56,11 +56,12 @@ use RC_Uri;
  */
 class IntegratePluginMenuService
 {
-	public function handle(&$options) {
-		$menus = ecjia_admin::make_admin_menu('menu_user_integrate', __('会员整合', 'integrate'), RC_Uri::url('integrate/admin_plugin/init'), 10)->add_purview('integrate_users')->add_base('integrate');
+    public function handle($options)
+    {
+        $menus = ecjia_admin::make_admin_menu('menu_user_integrate', __('会员整合', 'integrate'), RC_Uri::url('integrate/admin_plugin/init'), 10)->add_purview('integrate_users')->add_base('integrate');
 
-		return $menus;
-	}
+        return $menus;
+    }
 }
 
 // end

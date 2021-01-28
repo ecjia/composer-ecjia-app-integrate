@@ -52,9 +52,10 @@ namespace Ecjia\App\Integrate\Services;
  */
 class IntegrateAdminPurviewService
 {
-    public function handle(&$options) {
+    public function handle($options)
+    {
         $purviews = array(
-			array('action_name' => __('会员整合', 'integrate'), 'action_code' => 'integrate_users', 'relevance' => ''),
+            array('action_name' => __('会员整合', 'integrate'), 'action_code' => 'integrate_users', 'relevance' => ''),
         );
         return $purviews;
     }
